@@ -43,11 +43,29 @@ jobs:
       - name: Trust the tap
         run: brew trust erenahmettt/tap
 
+      # Both of these print their real complaint to stdout, and GitHub requires
+      # a signed-in account to read a workflow log. Annotations are public, so
+      # failures are echoed into one — otherwise a contributor sent here by a
+      # red tick sees nothing but "exit code 1".
       - name: Style
-        run: brew style erenahmettt/tap
+        run: |
+          if ! output="$(brew style erenahmettt/tap 2>&1)"; then
+            printf '%s\n' "$output"
+            printf '::error title=brew style::%s\n' \
+              "$(printf '%s' "$output" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%0A/g')"
+            exit 1
+          fi
+          printf '%s\n' "$output"
 
       - name: Audit
-        run: brew audit --cask --online erenahmettt/tap/diskova
+        run: |
+          if ! output="$(brew audit --cask --online erenahmettt/tap/diskova 2>&1)"; then
+            printf '%s\n' "$output"
+            printf '::error title=brew audit::%s\n' \
+              "$(printf '%s' "$output" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%0A/g')"
+            exit 1
+          fi
+          printf '%s\n' "$output"
 
       - name: Install for real
         run: brew install --cask erenahmettt/tap/diskova
