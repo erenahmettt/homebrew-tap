@@ -1,0 +1,69 @@
+name: Audit casks
+
+# A cask that is merely syntactically valid can still fail to install. This
+# workflow does the thing a human cannot easily do on their own machine without
+# dirtying it: tap, audit, actually install, check the app landed and that the
+# quarantine flag really was cleared, then uninstall.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # The casks point at external release archives. A weekly run notices if a
+    # download disappears or its checksum stops matching.
+    - cron: "17 6 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Audit and install
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: tap
+
+      - name: Install as a local tap
+        run: |
+          TAP_ROOT="$(brew --repository)/Library/Taps/erenahmettt"
+          mkdir -p "$TAP_ROOT"
+          cp -R "$GITHUB_WORKSPACE/tap" "$TAP_ROOT/homebrew-tap"
+          brew tap
+          brew --version
+
+      - name: Style
+        run: brew style erenahmettt/tap
+
+      - name: Audit
+        run: brew audit --cask --online erenahmettt/tap/diskova
+
+      - name: Trust the tap
+        run: brew trust --tap erenahmettt/tap
+
+      - name: Install for real
+        run: brew install --cask erenahmettt/tap/diskova
+
+      - name: Check what actually landed
+        run: |
+          set -x
+          test -d /Applications/Diskova.app
+          codesign --verify --strict --verbose=1 /Applications/Diskova.app
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+            /Applications/Diskova.app/Contents/Info.plist
+          # The postflight should have removed this. `xattr -p` exits non-zero
+          # when the attribute is absent, which is the result we want.
+          if xattr -p com.apple.quarantine /Applications/Diskova.app 2>/dev/null; then
+            echo "::error::quarantine flag is still set — the postflight did not run"
+            exit 1
+          fi
+          echo "quarantine flag is clear, as intended"
+
+      - name: Uninstall again
+        run: |
+          brew uninstall --cask erenahmettt/tap/diskova
+          test ! -d /Applications/Diskova.app
