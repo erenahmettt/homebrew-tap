@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: tap
 
@@ -36,14 +36,18 @@ jobs:
           brew tap
           brew --version
 
+      # Must come before anything else that touches the tap. Until a tap is
+      # trusted, Homebrew ignores its casks completely — `brew style` and
+      # `brew audit` do not report a problem with the cask, they report that
+      # there is no such cask.
+      - name: Trust the tap
+        run: brew trust erenahmettt/tap
+
       - name: Style
         run: brew style erenahmettt/tap
 
       - name: Audit
         run: brew audit --cask --online erenahmettt/tap/diskova
-
-      - name: Trust the tap
-        run: brew trust --tap erenahmettt/tap
 
       - name: Install for real
         run: brew install --cask erenahmettt/tap/diskova

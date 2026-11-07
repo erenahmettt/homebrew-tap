@@ -7,7 +7,7 @@ brew tap erenahmettt/tap
 ```
 
 ```bash
-brew trust --tap erenahmettt/tap
+brew trust erenahmettt/tap
 ```
 
 ```bash
