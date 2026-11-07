@@ -40,10 +40,10 @@ used to get past it. Homebrew's `--no-quarantine` flag, which used to handle
 this, has been removed. So each cask here runs this after installing:
 
 ```ruby
-postflight do
-  system_command "/usr/bin/xattr",
-                 args: ["-dr", "com.apple.quarantine", "#{appdir}/Diskova.app"],
-                 sudo: false
+postflight_steps do
+  run "/usr/bin/xattr",
+      args:           ["-dr", "com.apple.quarantine", "{{appdir}}/Diskova.app"],
+      writable_paths: ["{{appdir}}/Diskova.app"]
 end
 ```
 

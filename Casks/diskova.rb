@@ -4,7 +4,6 @@ cask "diskova" do
 
   url "https://github.com/erenahmettt/diskova/releases/download/v#{version}/Diskova-#{version}.zip",
       verified: "github.com/erenahmettt/diskova/"
-
   name "Diskova"
   desc "Treemap disk space visualiser that can move what it finds to the Trash"
   homepage "https://github.com/erenahmettt/diskova"
@@ -14,7 +13,7 @@ cask "diskova" do
     strategy :github_latest
   end
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "Diskova.app"
 
@@ -29,10 +28,10 @@ cask "diskova" do
   # someone deliberately asked for is the same thing they would otherwise type
   # by hand — but it is said out loud in the caveats below rather than done
   # quietly, because it is the one thing in here worth knowing about.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/Diskova.app"],
-                   sudo: false
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:           ["-dr", "com.apple.quarantine", "{{appdir}}/Diskova.app"],
+        writable_paths: ["{{appdir}}/Diskova.app"]
   end
 
   uninstall quit: "io.github.erenahmettt.Diskova"
