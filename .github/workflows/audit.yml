@@ -19,9 +19,17 @@ concurrency:
 
 jobs:
   audit:
-    name: Audit and install
+    name: Audit and install ${{ matrix.cask }}
     runs-on: macos-15
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cask: diskova
+            app: Diskova
+          - cask: macblueprint
+            app: MacBlueprint
 
     steps:
       - uses: actions/checkout@v5
@@ -59,7 +67,7 @@ jobs:
 
       - name: Audit
         run: |
-          if ! output="$(brew audit --cask --online erenahmettt/tap/diskova 2>&1)"; then
+          if ! output="$(brew audit --cask --online "erenahmettt/tap/${{ matrix.cask }}" 2>&1)"; then
             printf '%s\n' "$output"
             printf '::error title=brew audit::%s\n' \
               "$(printf '%s' "$output" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%0A/g')"
@@ -68,18 +76,19 @@ jobs:
           printf '%s\n' "$output"
 
       - name: Install for real
-        run: brew install --cask erenahmettt/tap/diskova
+        run: brew install --cask "erenahmettt/tap/${{ matrix.cask }}"
 
       - name: Check what actually landed
         run: |
           set -x
-          test -d /Applications/Diskova.app
-          codesign --verify --strict --verbose=1 /Applications/Diskova.app
+          APP="/Applications/${{ matrix.app }}.app"
+          test -d "$APP"
+          codesign --verify --strict --verbose=1 "$APP"
           /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
-            /Applications/Diskova.app/Contents/Info.plist
+            "$APP/Contents/Info.plist"
           # The postflight should have removed this. `xattr -p` exits non-zero
           # when the attribute is absent, which is the result we want.
-          if xattr -p com.apple.quarantine /Applications/Diskova.app 2>/dev/null; then
+          if xattr -p com.apple.quarantine "$APP" 2>/dev/null; then
             echo "::error::quarantine flag is still set — the postflight did not run"
             exit 1
           fi
@@ -87,5 +96,44 @@ jobs:
 
       - name: Uninstall again
         run: |
-          brew uninstall --cask erenahmettt/tap/diskova
-          test ! -d /Applications/Diskova.app
+          brew uninstall --cask "erenahmettt/tap/${{ matrix.cask }}"
+          test ! -d "/Applications/${{ matrix.app }}.app"
+
+  formula:
+    name: Audit and install macblueprint (formula)
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: tap
+
+      - name: Install as a local tap
+        run: |
+          TAP_ROOT="$(brew --repository)/Library/Taps/erenahmettt"
+          mkdir -p "$TAP_ROOT"
+          cp -R "$GITHUB_WORKSPACE/tap" "$TAP_ROOT/homebrew-tap"
+
+      - name: Trust the tap
+        run: brew trust erenahmettt/tap
+
+      - name: Audit
+        run: |
+          if ! output="$(brew audit --formula --online erenahmettt/tap/macblueprint 2>&1)"; then
+            printf '%s\n' "$output"
+            printf '::error title=brew audit::%s\n' \
+              "$(printf '%s' "$output" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%0A/g')"
+            exit 1
+          fi
+          printf '%s\n' "$output"
+
+      - name: Install, test and run it
+        run: |
+          brew install --formula erenahmettt/tap/macblueprint
+          brew test erenahmettt/tap/macblueprint
+          macblueprint scan -o snapshot.json
+          test -s snapshot.json
+
+      - name: Uninstall again
+        run: brew uninstall --formula erenahmettt/tap/macblueprint
