@@ -10,15 +10,27 @@ brew tap erenahmettt/tap
 brew trust erenahmettt/tap
 ```
 
+Then install whichever you want:
+
 ```bash
 brew install --cask diskova
 ```
 
+```bash
+brew install --cask macblueprint
+```
+
+```bash
+brew install --formula macblueprint
+```
+
 ## What is in here
 
-| Cask | What it is |
-|---|---|
-| [`diskova`](Casks/diskova.rb) | [Diskova](https://github.com/erenahmettt/diskova) — maps a folder or a whole disk as a treemap, so whatever is filling it is the biggest shape on screen |
+| Package | Kind | What it is |
+|---|---|---|
+| [`diskova`](Casks/diskova.rb) | cask | [Diskova](https://github.com/erenahmettt/diskova) — maps a folder or a whole disk as a treemap, so whatever is filling it is the biggest shape on screen |
+| [`macblueprint`](Casks/macblueprint.rb) | cask | [MacBlueprint](https://github.com/erenahmettt/MacBlueprint) — snapshots a Mac's apps, Homebrew packages and editor extensions, then shows and restores what a new Mac is missing |
+| [`macblueprint`](Formula/macblueprint.rb) | formula | The `macblueprint` command-line tool from the same project. A plain binary, so there is no quarantine flag to clear |
 
 ## Why a separate tap, and why the trust step
 
@@ -64,10 +76,10 @@ Entirely reasonable. Two alternatives, both supported:
 
 ## Verifying what you get
 
-Every cask pins an exact `sha256`, so Homebrew refuses the download if the
+Every cask and formula pins an exact `sha256`, so Homebrew refuses the download if the
 archive is not byte-for-byte the one that was published. The archives are built
 by GitHub Actions from a tagged commit, and the workflow that builds them is
-public. The cask in this repository is itself installed and verified by
+public. Each package in this repository is itself installed and verified by
 [CI](.github/workflows/audit.yml) on every push.
 
 ## Licence
