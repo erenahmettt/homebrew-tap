@@ -1,5 +1,5 @@
 class Macblueprint < Formula
-  desc "Snapshot a Mac's apps and tools, then restore them on another Mac"
+  desc "Snapshot installed apps and dev tools, then restore them on a new machine"
   homepage "https://github.com/erenahmettt/MacBlueprint"
   url "https://github.com/erenahmettt/MacBlueprint/releases/download/v0.3.1/macblueprint-0.3.1-macos.zip"
   sha256 "b2768fd7f7e02997fd588746bfbc45ed414991660153a92c72aa702fd8f306d1"

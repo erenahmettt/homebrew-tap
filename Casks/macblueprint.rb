@@ -5,7 +5,7 @@ cask "macblueprint" do
   url "https://github.com/erenahmettt/MacBlueprint/releases/download/v#{version}/MacBlueprint-#{version}.zip",
       verified: "github.com/erenahmettt/MacBlueprint/"
   name "MacBlueprint"
-  desc "Snapshot a Mac's apps and tools, then restore them on another Mac"
+  desc "Snapshot installed apps and dev tools, then restore them on a new machine"
   homepage "https://github.com/erenahmettt/MacBlueprint"
 
   livecheck do
